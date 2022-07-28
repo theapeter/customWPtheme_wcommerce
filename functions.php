@@ -139,25 +139,45 @@ add_action( 'widgets_init', 'alpacas_widgets_init' );
  */
 
 function alpacas_scripts() {
-	wp_enqueue_style( 'alpacas-main', get_template_directory_uri() . './css/main.css');
+	
+
 	wp_enqueue_style( 'alpacas-style', get_stylesheet_uri(), array(), _S_VERSION );
+	
+	// wp_enqueue_style( 'alpacas-main', get_template_directory_uri() . './css/main.css'); //Path breaks styling
+	wp_enqueue_style( 'alpacas-main', get_template_directory_uri() . '/css/main.css');
+	
+	wp_enqueue_style( 'bootstrap-icons', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.0/font/bootstrap-icons.css');
+
 	wp_style_add_data( 'alpacas-style', 'rtl', 'replace' );
 
+	//toggles menu on small screen
 	wp_enqueue_script( 'alpacas-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true );
 
-	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
-		wp_enqueue_script( 'comment-reply' );
-	}
+	wp_enqueue_script( 'bootstrap-popper', 'https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js', array('jquery') );
+	wp_enqueue_script( 'bootstrap-script', 'https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.min.js', array('jquery') );
+	wp_enqueue_script( 'alpacas-script', get_template_directory_uri() . '/js/script.js', array('jquery') );
+
+	// if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+	// 	wp_enqueue_script( 'comment-reply' );
+	// }
 }
 add_action( 'wp_enqueue_scripts', 'alpacas_scripts' );
 
 
-// function my_script_enqueue() {
-  
-// 	wp_enqueue_style("bs_css", "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css");
-// }
 
-// add_action( 'wp_enqueue_scripts', 'my_script_enqueue' );
+/**
+ * Custom fonts
+ */
+
+ function enqueue_custom_fonts(){
+	if(!is_admin()){
+		wp_register_style('source_sans_pro', 'https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
+		wp_register_style('nunito', 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Source+Sans+Pro:wght@400;600;700&display=swap');
+		wp_enqueue_style('source_sans_pro');
+		wp_enqueue_style('nunito');
+	}
+ }
+ add_action('wp_enqueue_scripts', 'enqueue_custom_fonts');
 
 /**
  * Implement the Custom Header feature.
@@ -184,5 +204,26 @@ require get_template_directory() . '/inc/customizer.php';
  */
 if ( defined( 'JETPACK__VERSION' ) ) {
 	require get_template_directory() . '/inc/jetpack.php';
+}
+
+
+
+
+
+/**
+ * Show cart contents / total Ajax
+ */
+add_filter( 'woocommerce_add_to_cart_fragments', 'woocommerce_header_add_to_cart_fragment' );
+
+function woocommerce_header_add_to_cart_fragment( $fragments ) {
+	global $woocommerce;
+
+	ob_start();
+
+	?>
+	<a class="cart-customlocation" href="<?php echo esc_url(wc_get_cart_url()); ?>" title="<?php _e('View your shopping cart', 'woothemes'); ?>"><?php echo sprintf(_n('%d item', '%d items', $woocommerce->cart->cart_contents_count, 'woothemes'), $woocommerce->cart->cart_contents_count);?> – <?php echo $woocommerce->cart->get_cart_total(); ?></a>
+	<?php
+	$fragments['a.cart-customlocation'] = ob_get_clean();
+	return $fragments;
 }
 
